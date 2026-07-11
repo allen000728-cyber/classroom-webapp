@@ -48,17 +48,21 @@ export async function loadStudents() {
   syncCountInputFromStudents()
 }
 
+let latestRequestedDate = null
+
 export async function loadDay(date) {
+  latestRequestedDate = date
   store.loading = true
   try {
     const day = await apiGet(`/api/day/${date}`)
+    if (date !== latestRequestedDate) return // 這期間又切了別的日期，這筆回應已經過時，丟棄
     store.date = day.date
     store.notes = day.notes
     store.attendance = day.attendance
     store.assignments = day.assignments
     store.submissions = day.submissions
   } finally {
-    store.loading = false
+    if (date === latestRequestedDate) store.loading = false
   }
 }
 

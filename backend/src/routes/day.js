@@ -1,12 +1,24 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
 import { requireTeacher } from '../middleware/auth.js'
+import { asyncHandler } from '../asyncHandler.js'
 
 export const router = Router()
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function requireValidDate(req, res, next) {
+  if (!DATE_RE.test(req.params.date)) {
+    return res.status(400).json({ error: '日期格式必須是 YYYY-MM-DD' })
+  }
+  next()
+}
+
+router.param('date', requireValidDate)
+
 // GET /api/day/:date — 公開，把某一天的點名/作業資料整理成一份回應
 // 用座號 (seat_no) 當 key，跟前端 store.js 的 roll[]/sub[] 概念直接對應
-router.get('/:date', async (req, res) => {
+router.get('/:date', asyncHandler(async (req, res) => {
   const { date } = req.params
 
   const [notesRes, attendanceRes, assignmentsRes] = await Promise.all([
@@ -46,10 +58,10 @@ router.get('/:date', async (req, res) => {
     assignments: assignmentsRes.rows,
     submissions,
   })
-})
+}))
 
 // PUT /api/day/:date/notes { notes } — 老師專用
-router.put('/:date/notes', requireTeacher, async (req, res) => {
+router.put('/:date/notes', requireTeacher, asyncHandler(async (req, res) => {
   const { date } = req.params
   const notes = req.body.notes ?? ''
   await pool.query(
@@ -58,13 +70,16 @@ router.put('/:date/notes', requireTeacher, async (req, res) => {
     [date, notes]
   )
   res.json({ date, notes })
-})
+}))
 
 // PUT /api/day/:date/attendance { seatNo, status } — 老師專用，單一座號點名狀態
-router.put('/:date/attendance', requireTeacher, async (req, res) => {
+router.put('/:date/attendance', requireTeacher, asyncHandler(async (req, res) => {
   const { date } = req.params
   const seatNo = parseInt(req.body.seatNo, 10)
   const status = parseInt(req.body.status, 10)
+  if (!seatNo || seatNo < 1) {
+    return res.status(400).json({ error: 'seatNo 必須是正整數' })
+  }
   if (![0, 1, 2, 3].includes(status)) {
     return res.status(400).json({ error: 'status 必須是 0-3' })
   }
@@ -80,10 +95,10 @@ router.put('/:date/attendance', requireTeacher, async (req, res) => {
     [date, student.rows[0].id, status]
   )
   res.json({ date, seatNo, status })
-})
+}))
 
 // POST /api/day/:date/reset — 老師專用，清除當天點名/作業繳交紀錄（保留作業項目名稱）
-router.post('/:date/reset', requireTeacher, async (req, res) => {
+router.post('/:date/reset', requireTeacher, asyncHandler(async (req, res) => {
   const { date } = req.params
   await pool.query('DELETE FROM attendance_records WHERE date = $1', [date])
   await pool.query(
@@ -92,10 +107,10 @@ router.post('/:date/reset', requireTeacher, async (req, res) => {
     [date]
   )
   res.status(204).end()
-})
+}))
 
 // POST /api/day/:date/assignments { name } — 老師專用，新增當天作業項目
-router.post('/:date/assignments', requireTeacher, async (req, res) => {
+router.post('/:date/assignments', requireTeacher, asyncHandler(async (req, res) => {
   const { date } = req.params
   const name = req.body.name ?? ''
   const { rows } = await pool.query(
@@ -105,4 +120,4 @@ router.post('/:date/assignments', requireTeacher, async (req, res) => {
     [date, name]
   )
   res.status(201).json(rows[0])
-})
+}))
