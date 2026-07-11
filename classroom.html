@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班級日常管理</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+  background: #eceff1;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.header {
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 3px solid #b0bec5;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 50px;
+}
+
+.lbl {
+  font-size: 16px;
+  font-weight: bold;
+  color: #37474f;
+  white-space: nowrap;
+}
+
+.header input[type=text] {
+  border: 1.5px solid #90a4ae;
+  border-radius: 5px;
+  padding: 5px 9px;
+  font-size: 16px;
+  font-family: inherit;
+  color: #212121;
+  outline: none;
+  transition: border-color .15s;
+}
+.header input[type=text]:focus { border-color: #1976d2; }
+
+#inp-date  { width: 175px; font-size: 16px; font-family: inherit; }
+#inp-notes { flex: 1; min-width: 180px; max-width: 460px; }
+
+.header .lbl-small {
+  font-size: 14px;
+  color: #78909c;
+  white-space: nowrap;
+}
+#inp-count {
+  width: 52px;
+  border: 1.5px solid #90a4ae;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 15px;
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+}
+#inp-count:focus { border-color: #1976d2; }
+
+#inp-excluded {
+  width: 130px;
+  border: 1.5px solid #90a4ae;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+#inp-excluded:focus { border-color: #1976d2; }
+
+.btn {
+  padding: 6px 16px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: bold;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.btn-save  { background: #1976d2; color: #fff; }
+.btn-save:hover  { background: #1565c0; }
+.btn-clear { background: #78909c; color: #fff; }
+.btn-clear:hover { background: #546e7a; }
+
+/* ── Main ── */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Roll Panel ── */
+.roll {
+  width: 190px;
+  flex-shrink: 0;
+  background: #fff9f9;
+  border-right: 3px solid #c62828;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-hd {
+  text-align: center;
+  font-size: 17px;
+  font-weight: bold;
+  padding: 7px 4px;
+  flex-shrink: 0;
+}
+.roll  .panel-hd { background: #c62828; color: #fff; }
+
+.roll-legend {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  padding: 3px 4px 2px;
+  border-bottom: 1px solid #e0b0b0;
+  flex-shrink: 0;
+}
+
+.roll-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  align-content: start;
+}
+
+.roll-btn {
+  border: 2px solid #c62828;
+  border-radius: 7px;
+  background: #fff;
+  color: #c62828;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: inherit;
+  padding: 7px 2px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .1s;
+  user-select: none;
+  line-height: 1.2;
+}
+.roll-btn:hover    { filter: brightness(.93); }
+.roll-btn.s-arr    { background: #43a047; border-color: #2e7d32; color: #fff; }
+.roll-btn.s-abs    { background: #e53935; border-color: #b71c1c; color: #fff; }
+.roll-btn.s-lv     { background: #fb8c00; border-color: #e65100; color: #fff; }
+
+/* ── Homework Panel ── */
+.hw {
+  flex: 1;
+  background: #f3f6ff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.hw .panel-hd { background: #283593; color: #fff; }
+
+.assign-bar {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: #e8eaf6;
+  border-bottom: 1.5px solid #9fa8da;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.assign-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.assign-inp {
+  width: 72px;
+  border: 1.5px solid #9fa8da;
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+  background: #fff;
+  transition: border-color .15s;
+}
+.assign-inp:focus { border-color: #3949ab; }
+
+.btn-del-assign {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: #ef9a9a;
+  color: #b71c1c;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+}
+.btn-del-assign:hover { background: #e53935; color: #fff; }
+
+.btn-add-assign {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1.5px dashed #9fa8da;
+  background: #fff;
+  color: #3949ab;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  font-weight: bold;
+  align-self: center;
+}
+.btn-add-assign:hover { background: #e8eaf6; border-color: #3949ab; }
+
+/* ── Homework table ── */
+.hw-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+table.hw-tbl {
+  border-collapse: collapse;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+table.hw-tbl th {
+  border: 1px solid #9fa8da;
+  padding: 4px 5px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+table.hw-tbl td {
+  border: 1px solid #c5cae9;
+  text-align: center;
+  padding: 2px 3px;
+  background: #fff;
+}
+
+tr:nth-child(even) td { background: #f7f8ff; }
+
+th.th-num  { background: #c5cae9; min-width: 36px; }
+th.th-sub-g  { background: #ffcdd2; font-weight: bold; }
+th.th-sub    { background: #fff5f5; min-width: 40px; }
+
+td.td-num {
+  font-weight: bold;
+  color: #546e7a;
+  font-size: 15px;
+  width: 36px;
+  background: #e8eaf6 !important;
+}
+
+td.td-num-r {
+  font-weight: bold;
+  color: #546e7a;
+  font-size: 15px;
+  width: 36px;
+  background: #e8eaf6 !important;
+  border-left: 3px solid #9fa8da !important;
+}
+
+.tog {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid #ccc;
+  background: #f5f5f5;
+  color: #bbb;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .1s;
+  user-select: none;
+  vertical-align: middle;
+}
+.tog:hover       { filter: brightness(.88); }
+.tog.tok-sub     { background: #f44336; border-color: #b71c1c; color: #fff; }
+
+/* ── Legend ── */
+.legend {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: #e8eaf6;
+  border-top: 1.5px solid #9fa8da;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #37474f;
+}
+.legend strong { font-size: 14px; }
+.li { display: flex; align-items: center; gap: 4px; }
+.ld {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<div class="header">
+  <span class="lbl">日期：</span>
+  <input type="date" id="inp-date">
+
+  <span class="lbl">早自修交待事項：</span>
+  <input type="text" id="inp-notes" placeholder="輸入今日待辦…">
+
+  <span class="lbl-small">學生人數：</span>
+  <input type="text" id="inp-count" value="28" title="設定學生人數後按 Enter 重建">
+
+  <span class="lbl-small">排除座號：</span>
+  <input type="text" id="inp-excluded" placeholder="如：14 或 14,22" title="輸入不存在的座號（逗號分隔），按 Enter 套用">
+
+  <button class="btn btn-save"  onclick="saveAll()">儲存</button>
+  <button class="btn btn-clear" onclick="clearDay()">清除當日紀錄</button>
+</div>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="main">
+
+  <!-- 點名區 -->
+  <div class="roll">
+    <div class="panel-hd">點名區</div>
+    <div class="roll-legend">點擊切換：到 → 缺席 → 請假</div>
+    <div class="roll-grid" id="roll-grid"></div>
+  </div>
+
+  <!-- 作業繳交區 -->
+  <div class="hw">
+    <div class="panel-hd">作業繳交區</div>
+
+    <div class="assign-bar">
+      <span class="lbl">作業項目：</span>
+      <div id="assign-wrap" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+    </div>
+
+    <div class="hw-scroll">
+      <table class="hw-tbl" id="hw-tbl"></table>
+    </div>
+
+    <div class="legend">
+      <strong>說明：</strong>
+      <div class="li"><span class="ld" style="background:#f44336;border:1.5px solid #b71c1c;"></span>缺交 = 未繳交（點擊標記）</div>
+      <div class="li"><span class="ld" style="background:#43a047;border:1.5px solid #2e7d32;"></span>到 = 已到校</div>
+      <div class="li"><span class="ld" style="background:#e53935;border:1.5px solid #b71c1c;"></span>缺 = 缺席</div>
+      <div class="li"><span class="ld" style="background:#fb8c00;border:1.5px solid #e65100;"></span>假 = 請假</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────
+const KEY = 'classroom_v1';
+
+// ── State ───────────────────────────────
+let N = 28;  // student count, may be overridden by saved value
+
+let S = {
+  date:     '',
+  notes:    '',
+  n:        N,
+  excluded: [],  // 1-indexed seat numbers to hide
+  names:    ['A', 'B', 'C', 'D'],
+  roll:     [],  // 0=未 1=到 2=缺 3=假
+  sub:      [],
+};
+
+function freshArrays(count) {
+  S.roll = new Array(count).fill(0);
+  S.sub  = Array.from({length: count}, () => new Array(S.names.length).fill(false));
+}
+
+// ── Persistence ─────────────────────────
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) { freshArrays(N); return; }
+    const saved = JSON.parse(raw);
+    S.date  = saved.date  || '';
+    S.notes = saved.notes || '';
+    S.n     = saved.n     || N;
+    S.names = saved.names || S.names;
+    S.excluded = saved.excluded || [];
+    S.roll  = saved.roll  || [];
+    S.sub   = saved.sub   || [];
+    N = S.n;
+    // Patch arrays if student count changed
+    while (S.roll.length < N) { S.roll.push(0); S.sub.push(new Array(S.names.length).fill(false)); }
+  } catch(e) { freshArrays(N); }
+}
+
+function saveAll() {
+  S.date     = document.getElementById('inp-date').value;
+  S.notes    = document.getElementById('inp-notes').value;
+  S.excluded = parseExcluded();
+  S.n = N;
+  localStorage.setItem(KEY, JSON.stringify(S));
+  const btn = document.querySelector('.btn-save');
+  btn.textContent = '✓ 已儲存';
+  setTimeout(() => { btn.textContent = '儲存'; }, 1500);
+}
+
+let _t;
+function autoSave() {
+  clearTimeout(_t);
+  _t = setTimeout(saveAll, 600);
+}
+
+function clearDay() {
+  if (!confirm('確定清除今日所有點名和作業紀錄？\n（日期、待事項、作業名稱保留）')) return;
+  freshArrays(N);
+  renderRoll();
+  rebuildTbody();
+  autoSave();
+}
+
+// ── Excluded seats ───────────────────────
+function parseExcluded() {
+  const val = document.getElementById('inp-excluded').value;
+  return val.split(/[,，\s]+/)
+    .map(v => parseInt(v.trim(), 10))
+    .filter(v => !isNaN(v) && v >= 1 && v <= N);
+}
+
+function excludedSet() {
+  return new Set(S.excluded);
+}
+
+document.getElementById('inp-excluded').addEventListener('change', function() {
+  S.excluded = parseExcluded();
+  renderRoll();
+  buildTable();
+  autoSave();
+});
+
+// ── Student count input ──────────────────
+document.getElementById('inp-count').addEventListener('change', function() {
+  const v = parseInt(this.value, 10);
+  if (!v || v < 1 || v > 60) { this.value = N; return; }
+  N = v;
+  this.value = N;
+  // Extend or trim arrays
+  while (S.roll.length < N) { S.roll.push(0); S.sub.push(new Array(S.names.length).fill(false)); }
+  renderRoll();
+  buildTable();
+  autoSave();
+});
+
+// ── Roll call ───────────────────────────
+const R_LBL = ['', '到', '缺', '假'];
+const R_CLS = ['', 's-arr', 's-abs', 's-lv'];
+
+function renderRoll() {
+  const grid = document.getElementById('roll-grid');
+  grid.innerHTML = '';
+  const excl = excludedSet();
+  for (let i = 0; i < N; i++) {
+    if (excl.has(i + 1)) continue;
+    const s   = S.roll[i];
+    const btn = document.createElement('button');
+    btn.className = 'roll-btn ' + R_CLS[s];
+    btn.textContent = (i + 1) + (s ? '\n' + R_LBL[s] : '');
+    btn.addEventListener('click', () => {
+      S.roll[i] = (S.roll[i] + 1) % 4;
+      const ns = S.roll[i];
+      btn.className = 'roll-btn ' + R_CLS[ns];
+      btn.textContent = (i + 1) + (ns ? '\n' + R_LBL[ns] : '');
+      autoSave();
+    });
+    grid.appendChild(btn);
+  }
+}
+
+// ── Assignment inputs ────────────────────
+function renderAssignInputs() {
+  const wrap = document.getElementById('assign-wrap');
+  wrap.innerHTML = '';
+
+  S.names.forEach((name, i) => {
+    const item = document.createElement('div');
+    item.className = 'assign-item';
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'assign-inp';
+    inp.value = name;
+    inp.placeholder = '項目' + (i + 1);
+    inp.addEventListener('input', () => {
+      S.names[i] = inp.value;
+      const label = inp.value || '項目' + (i + 1);
+      document.querySelectorAll('[data-sidx="' + i + '"]').forEach(th => { th.textContent = label; });
+      autoSave();
+    });
+
+    const del = document.createElement('button');
+    del.className = 'btn-del-assign';
+    del.textContent = '×';
+    del.title = '刪除此作業項目';
+    del.addEventListener('click', () => removeAssignment(i));
+
+    item.appendChild(inp);
+    item.appendChild(del);
+    wrap.appendChild(item);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn-add-assign';
+  addBtn.textContent = '+';
+  addBtn.title = '新增作業項目';
+  addBtn.addEventListener('click', addAssignment);
+  wrap.appendChild(addBtn);
+}
+
+function addAssignment() {
+  S.names.push('');
+  for (let s = 0; s < N; s++) S.sub[s].push(false);
+  renderAssignInputs();
+  buildTable();
+  autoSave();
+}
+
+function removeAssignment(i) {
+  if (S.names.length <= 1) return;  // keep at least 1
+  S.names.splice(i, 1);
+  for (let s = 0; s < N; s++) S.sub[s].splice(i, 1);
+  renderAssignInputs();
+  buildTable();
+  autoSave();
+}
+
+// ── Homework table ───────────────────────
+function buildTable() {
+  const tbl = document.getElementById('hw-tbl');
+  tbl.innerHTML = '';
+
+  // thead: two mirrored column groups
+  const thead = document.createElement('thead');
+
+  const r1 = document.createElement('tr');
+  const slots = S.names.length;
+  const thNL = mk('th', '#', 'th-num'); thNL.rowSpan = 2; r1.appendChild(thNL);
+  const thGL = mk('th', '缺交（未繳交）', 'th-sub-g'); thGL.colSpan = slots; r1.appendChild(thGL);
+  const thNR = mk('th', '#', 'th-num'); thNR.rowSpan = 2; thNR.style.borderLeft = '3px solid #9fa8da'; r1.appendChild(thNR);
+  const thGR = mk('th', '缺交（未繳交）', 'th-sub-g'); thGR.colSpan = slots; r1.appendChild(thGR);
+  thead.appendChild(r1);
+
+  const r2 = document.createElement('tr');
+  for (let col = 0; col < 2; col++) {
+    for (let i = 0; i < slots; i++) {
+      const th = mk('th', S.names[i] || '項目' + (i + 1), 'th-sub');
+      th.dataset.sidx = i;
+      if (col === 1 && i === 0) th.style.borderLeft = '3px solid #9fa8da';
+      r2.appendChild(th);
+    }
+  }
+  thead.appendChild(r2);
+  tbl.appendChild(thead);
+
+  tbl.appendChild(buildTbody());
+}
+
+function rebuildTbody() {
+  const tbl = document.getElementById('hw-tbl');
+  const old = tbl.querySelector('tbody');
+  if (old) old.remove();
+  tbl.appendChild(buildTbody());
+}
+
+function buildTbody() {
+  // Collect visible student indices
+  const excl = excludedSet();
+  const visible = [];
+  for (let s = 0; s < N; s++) {
+    if (!excl.has(s + 1)) visible.push(s);
+  }
+
+  const half   = Math.ceil(visible.length / 2);
+  const left   = visible.slice(0, half);
+  const right  = visible.slice(half);
+
+  const tbody = document.createElement('tbody');
+  for (let r = 0; r < half; r++) {
+    const tr = document.createElement('tr');
+    appendStudentCells(tr, left[r], false);
+    if (right[r] !== undefined) {
+      appendStudentCells(tr, right[r], true);
+    } else {
+      // Pad empty cells so the right column stays
+      const tdE = document.createElement('td');
+      tdE.colSpan = S.names.length + 1;
+      tdE.style.borderLeft = '3px solid #9fa8da';
+      tr.appendChild(tdE);
+    }
+    tbody.appendChild(tr);
+  }
+  return tbody;
+}
+
+function appendStudentCells(tr, s, isRight) {
+  const tdN = document.createElement('td');
+  tdN.className = isRight ? 'td-num-r' : 'td-num';
+  tdN.textContent = s + 1;
+  tr.appendChild(tdN);
+
+  for (let a = 0; a < S.names.length; a++) {
+    const td = document.createElement('td');
+    if (isRight && a === 0) td.style.borderLeft = '3px solid #9fa8da';
+    td.appendChild(makeTog(s, a));
+    tr.appendChild(td);
+  }
+}
+
+function makeTog(s, a) {
+  const btn = document.createElement('button');
+  const refresh = () => {
+    const on = !!S.sub[s][a];
+    btn.className = 'tog' + (on ? ' tok-sub' : '');
+    btn.textContent = on ? '交' : '';
+  };
+  refresh();
+  btn.title = '點擊：標記缺交（未繳交）';
+  btn.addEventListener('click', () => {
+    S.sub[s][a] = !S.sub[s][a];
+    refresh();
+    autoSave();
+  });
+  return btn;
+}
+
+function mk(tag, text, cls) {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  if (cls) el.className = cls;
+  return el;
+}
+
+// ── Boot ─────────────────────────────────
+load();
+const _today = new Date();
+const _todayStr = _today.getFullYear() + '-' +
+  String(_today.getMonth() + 1).padStart(2, '0') + '-' +
+  String(_today.getDate()).padStart(2, '0');
+document.getElementById('inp-date').value = S.date || _todayStr;
+document.getElementById('inp-notes').value    = S.notes;
+document.getElementById('inp-count').value    = N;
+document.getElementById('inp-excluded').value = S.excluded.join(', ');
+renderRoll();
+renderAssignInputs();
+buildTable();
+</script>
+</body>
+</html>
