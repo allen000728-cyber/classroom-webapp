@@ -2,11 +2,22 @@
 import { computed } from 'vue'
 import { store, visibleStudents, addAssignment, removeAssignment, renameAssignment, toggleSub } from '../store'
 
+const CHUNK_SIZE = 10
+
 const seats = computed(() => visibleStudents())
-const half = computed(() => Math.ceil(seats.value.length / 2))
-const left = computed(() => seats.value.slice(0, half.value))
-const right = computed(() => seats.value.slice(half.value))
+const chunks = computed(() => {
+  const result = []
+  for (let i = 0; i < seats.value.length; i += CHUNK_SIZE) {
+    result.push(seats.value.slice(i, i + CHUNK_SIZE))
+  }
+  return result
+})
+const rowCount = computed(() => Math.max(0, ...chunks.value.map((c) => c.length)))
 const colCount = computed(() => store.assignments.length || 1)
+
+function boundaryStyle(chunkIndex) {
+  return chunkIndex > 0 ? 'border-left:3px solid #9fa8da;' : ''
+}
 
 function assignLabel(a, i) {
   return a.name || ('項目' + (i + 1))
@@ -49,52 +60,43 @@ function onNameInput(assignment, e) {
       <table class="hw-tbl">
         <thead>
           <tr>
-            <th class="th-num" rowspan="2">#</th>
-            <th class="th-sub-g" :colspan="colCount">缺交（未繳交）</th>
-            <th class="th-num" rowspan="2" style="border-left:3px solid #9fa8da;">#</th>
-            <th class="th-sub-g" :colspan="colCount">缺交（未繳交）</th>
+            <template v-for="(_, ci) in chunks" :key="'gh' + ci">
+              <th class="th-num" rowspan="2" :style="boundaryStyle(ci)">#</th>
+              <th class="th-sub-g" :colspan="colCount">缺交（未繳交）</th>
+            </template>
           </tr>
           <tr>
-            <th v-if="!store.assignments.length" class="th-sub"></th>
-            <th v-for="(a, i) in store.assignments" :key="'l' + a.id" class="th-sub">{{ assignLabel(a, i) }}</th>
-            <th v-if="!store.assignments.length" class="th-sub" style="border-left:3px solid #9fa8da;"></th>
-            <th
-              v-for="(a, i) in store.assignments"
-              :key="'r' + a.id"
-              class="th-sub"
-              :style="i === 0 ? 'border-left:3px solid #9fa8da;' : ''"
-            >{{ assignLabel(a, i) }}</th>
+            <template v-for="(_, ci) in chunks" :key="'sh' + ci">
+              <th v-if="!store.assignments.length" class="th-sub" :style="boundaryStyle(ci)"></th>
+              <th
+                v-for="(a, ai) in store.assignments"
+                :key="'shc' + ci + '-' + a.id"
+                class="th-sub"
+                :style="ai === 0 ? boundaryStyle(ci) : ''"
+              >{{ assignLabel(a, ai) }}</th>
+            </template>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(s, r) in left" :key="s.id">
-            <td class="td-num">{{ s.seat_no }}</td>
-            <td v-if="!store.assignments.length"></td>
-            <td v-for="a in store.assignments" :key="'la' + a.id">
-              <button
-                class="tog"
-                :class="{ 'tok-sub': missing(s.seat_no, a.id) }"
-                title="點擊：標記缺交（未繳交）"
-                @click="toggleSub(s.seat_no, a.id)"
-              >{{ missing(s.seat_no, a.id) ? '交' : '' }}</button>
-            </td>
-            <template v-if="right[r] !== undefined">
-              <td class="td-num-r">{{ right[r].seat_no }}</td>
-              <td v-if="!store.assignments.length" style="border-left:3px solid #9fa8da;"></td>
-              <td
-                v-for="(a, i) in store.assignments"
-                :key="'ra' + a.id"
-                :style="i === 0 ? 'border-left:3px solid #9fa8da;' : ''"
-              >
-                <button
-                  class="tog"
-                  :class="{ 'tok-sub': missing(right[r].seat_no, a.id) }"
-                  title="點擊：標記缺交（未繳交）"
-                  @click="toggleSub(right[r].seat_no, a.id)"
-                >{{ missing(right[r].seat_no, a.id) ? '交' : '' }}</button>
-              </td>
+          <tr v-for="r in rowCount" :key="'row' + r">
+            <template v-for="(chunk, ci) in chunks" :key="'grp' + ci + '-' + r">
+              <td class="td-num" :style="boundaryStyle(ci)">{{ chunk[r - 1] ? chunk[r - 1].seat_no : '' }}</td>
+              <template v-if="chunk[r - 1] && store.assignments.length">
+                <td
+                  v-for="(a, ai) in store.assignments"
+                  :key="'cell' + ci + '-' + a.id"
+                  :style="ai === 0 ? boundaryStyle(ci) : ''"
+                >
+                  <button
+                    class="tog"
+                    :class="{ 'tok-sub': missing(chunk[r - 1].seat_no, a.id) }"
+                    title="點擊：標記缺交（未繳交）"
+                    @click="toggleSub(chunk[r - 1].seat_no, a.id)"
+                  >{{ missing(chunk[r - 1].seat_no, a.id) ? '交' : '' }}</button>
+                </td>
+              </template>
+              <td v-else :colspan="colCount" :style="boundaryStyle(ci)"></td>
             </template>
-            <td v-else :colspan="colCount + 1" style="border-left:3px solid #9fa8da;"></td>
           </tr>
         </tbody>
       </table>

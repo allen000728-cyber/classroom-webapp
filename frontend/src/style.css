@@ -388,15 +388,6 @@ td.td-num {
   background: #e8eaf6 !important;
 }
 
-td.td-num-r {
-  font-weight: bold;
-  color: #546e7a;
-  font-size: 15px;
-  width: 36px;
-  background: #e8eaf6 !important;
-  border-left: 3px solid #9fa8da !important;
-}
-
 .tog {
   display: inline-flex;
   align-items: center;
