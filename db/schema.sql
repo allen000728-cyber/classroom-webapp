@@ -32,3 +32,9 @@ CREATE TABLE homework_submissions (
   missing       boolean NOT NULL DEFAULT false, -- true = 缺交
   PRIMARY KEY (assignment_id, student_id)
 );
+
+CREATE TABLE teachers (
+  id            serial PRIMARY KEY,
+  username      text NOT NULL UNIQUE,
+  password_hash text NOT NULL
+);

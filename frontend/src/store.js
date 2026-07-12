@@ -166,9 +166,12 @@ export function visibleStudents() {
   return store.students.filter(s => s.active).slice().sort((a, b) => a.seat_no - b.seat_no)
 }
 
-export function teacherLogin(token) {
-  setToken(token)
-  store.token = token
+export function teacherLogin(username, password) {
+  return withErrorHandling(async () => {
+    const { token } = await apiPost('/api/auth/login', { username, password })
+    setToken(token)
+    store.token = token
+  })
 }
 
 export function teacherLogout() {

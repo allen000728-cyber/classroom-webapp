@@ -10,5 +10,5 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: TEACHER_TOKEN
+      - key: JWT_SECRET
         sync: false
