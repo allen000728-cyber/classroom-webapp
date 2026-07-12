@@ -12,7 +12,7 @@ const session = getSession()
 
 export const store = reactive({
   date: todayStr(),
-  notes: '',
+  notes: [],          // [{id, text, seq}]
   students: [],       // [{id, seat_no, active}]
   attendance: {},     // { [seat_no]: status(0-3) }
   assignments: [],    // [{id, name, seq}]
@@ -23,7 +23,6 @@ export const store = reactive({
   role: session.role || '',     // 'teacher' | 'parent'
   seatNo: session.seatNo || null, // 家長登入時，自己小孩的座號
   loading: false,
-  saveLabel: '儲存',
   error: '',
 })
 
@@ -81,19 +80,22 @@ export function changeDate(newDate) {
   withErrorHandling(() => loadDay(newDate))
 }
 
-export function saveNotes() {
+export function addNote() {
   return withErrorHandling(async () => {
-    store.saveLabel = '儲存中…'
-    await apiPut(`/api/day/${store.date}/notes`, { notes: store.notes })
-    store.saveLabel = '✓ 已儲存'
-    setTimeout(() => { store.saveLabel = '儲存' }, 1500)
+    const created = await apiPost(`/api/day/${store.date}/notes`, { text: '' })
+    store.notes.push(created)
   })
 }
 
-let notesTimer
-export function autoSaveNotes() {
-  clearTimeout(notesTimer)
-  notesTimer = setTimeout(saveNotes, 600)
+export function renameNote(id, text) {
+  withErrorHandling(() => apiPatch(`/api/notes/${id}`, { text }))
+}
+
+export function removeNote(id) {
+  return withErrorHandling(async () => {
+    await apiDelete(`/api/notes/${id}`)
+    store.notes = store.notes.filter(n => n.id !== id)
+  })
 }
 
 export function cycleRoll(seatNo) {

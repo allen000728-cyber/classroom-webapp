@@ -38,9 +38,12 @@ function onDateChange(e) {
     <div class="parent-card" v-if="child">
       <h2>座號 {{ child.seat_no }} 的狀況</h2>
 
-      <div class="parent-row">
+      <div class="parent-block">
         <span class="parent-row-lbl">早自修交待事項</span>
-        <span>{{ store.notes || '（無）' }}</span>
+        <div v-if="!store.notes.length">（無）</div>
+        <ul v-else class="parent-notes-list">
+          <li v-for="n in store.notes" :key="n.id">{{ n.text }}</li>
+        </ul>
       </div>
 
       <div class="parent-row">

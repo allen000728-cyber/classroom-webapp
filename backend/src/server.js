@@ -6,6 +6,7 @@ import { router as authRouter } from './routes/auth.js'
 import { router as studentsRouter } from './routes/students.js'
 import { router as dayRouter } from './routes/day.js'
 import { router as assignmentsRouter } from './routes/assignments.js'
+import { router as notesRouter } from './routes/notes.js'
 
 const app = express()
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/students', studentsRouter)
 app.use('/api/day', dayRouter)
 app.use('/api/assignments', assignmentsRouter)
+app.use('/api/notes', notesRouter)
 
 app.use((err, req, res, next) => {
   console.error(err)

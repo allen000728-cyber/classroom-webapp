@@ -2,6 +2,7 @@
 import { watch } from 'vue'
 import Login from './components/Login.vue'
 import HeaderBar from './components/HeaderBar.vue'
+import NotesBar from './components/NotesBar.vue'
 import RollPanel from './components/RollPanel.vue'
 import HomeworkPanel from './components/HomeworkPanel.vue'
 import ParentView from './components/ParentView.vue'
@@ -19,6 +20,7 @@ watch(
   <Login v-if="!store.token" />
   <template v-else-if="store.role === 'teacher'">
     <HeaderBar />
+    <NotesBar />
     <div class="main">
       <RollPanel />
       <HomeworkPanel />

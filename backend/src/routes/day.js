@@ -31,7 +31,7 @@ router.get('/:date', requireAuth, asyncHandler(async (req, res) => {
   const attendanceParams = scopeToStudentId ? [date, scopeToStudentId] : [date]
 
   const [notesRes, attendanceRes, assignmentsRes] = await Promise.all([
-    pool.query('SELECT notes FROM daily_notes WHERE date = $1', [date]),
+    pool.query('SELECT id, text, seq FROM daily_notes WHERE date = $1 ORDER BY seq', [date]),
     pool.query(attendanceQuery, attendanceParams),
     pool.query('SELECT id, name, seq FROM assignments WHERE date = $1 ORDER BY seq', [date]),
   ])
@@ -59,23 +59,24 @@ router.get('/:date', requireAuth, asyncHandler(async (req, res) => {
 
   res.json({
     date,
-    notes: notesRes.rows[0]?.notes ?? '',
+    notes: notesRes.rows,
     attendance,
     assignments: assignmentsRes.rows,
     submissions,
   })
 }))
 
-// PUT /api/day/:date/notes { notes } — 老師專用
-router.put('/:date/notes', requireTeacher, asyncHandler(async (req, res) => {
+// POST /api/day/:date/notes { text } — 老師專用，新增一筆早自修交待事項
+router.post('/:date/notes', requireTeacher, asyncHandler(async (req, res) => {
   const { date } = req.params
-  const notes = req.body.notes ?? ''
-  await pool.query(
-    `INSERT INTO daily_notes (date, notes) VALUES ($1, $2)
-     ON CONFLICT (date) DO UPDATE SET notes = EXCLUDED.notes`,
-    [date, notes]
+  const text = req.body.text ?? ''
+  const { rows } = await pool.query(
+    `INSERT INTO daily_notes (date, text, seq)
+     VALUES ($1, $2, (SELECT COALESCE(MAX(seq), 0) + 1 FROM daily_notes WHERE date = $1))
+     RETURNING id, text, seq`,
+    [date, text]
   )
-  res.json({ date, notes })
+  res.status(201).json(rows[0])
 }))
 
 // PUT /api/day/:date/attendance { seatNo, status } — 老師專用，單一座號點名狀態

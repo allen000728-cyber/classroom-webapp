@@ -87,6 +87,13 @@ body {
   border-bottom: 1px solid #eceff1;
 }
 .parent-row-lbl { color: #78909c; font-size: 14px; }
+.parent-block {
+  padding: 8px 0;
+  border-bottom: 1px solid #eceff1;
+}
+.parent-block .parent-row-lbl { display: block; margin-bottom: 4px; }
+.parent-notes-list { list-style: disc; padding-left: 20px; }
+.parent-notes-list li { padding: 2px 0; }
 .parent-hw-list { list-style: none; margin-top: 4px; }
 .parent-hw-list li {
   display: flex;
@@ -179,6 +186,22 @@ body {
 .btn-save:hover  { background: #1565c0; }
 .btn-clear { background: #78909c; color: #fff; }
 .btn-clear:hover { background: #546e7a; }
+
+/* ── Notes bar ── */
+.notes-bar {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  background: #fff;
+  border-bottom: 1.5px solid #b0bec5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.notes-inp {
+  width: 180px;
+  text-align: left;
+}
 
 /* ── Teacher login / error bar ── */
 .teacher-bar {

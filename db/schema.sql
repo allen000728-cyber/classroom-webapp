@@ -7,9 +7,12 @@ CREATE TABLE students (
 );
 
 CREATE TABLE daily_notes (
-  date  date NOT NULL PRIMARY KEY,
-  notes text NOT NULL DEFAULT ''
+  id   serial PRIMARY KEY,
+  date date NOT NULL,
+  text text NOT NULL,
+  seq  integer NOT NULL
 );
+CREATE INDEX idx_daily_notes_date ON daily_notes(date);
 
 CREATE TABLE attendance_records (
   date       date NOT NULL,
