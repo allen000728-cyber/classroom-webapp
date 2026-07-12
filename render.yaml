@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: classroom-backend
+    env: node
+    region: singapore
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: TEACHER_TOKEN
+        sync: false
