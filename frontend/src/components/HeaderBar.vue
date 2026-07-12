@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { store, saveNotes, autoSaveNotes, clearDay, applyExcluded, setStudentCount, changeDate } from '../store'
+import { store, saveNotes, autoSaveNotes, clearDay, applyExcluded, setStudentCount, changeDate, logout } from '../store'
 
 const countInput = ref(store.countInput)
 watch(() => store.countInput, (v) => { countInput.value = v })
@@ -49,5 +49,7 @@ function onCountChange(e) {
 
     <button class="btn btn-save" @click="saveNotes">{{ store.saveLabel }}</button>
     <button class="btn btn-clear" @click="clearDay">清除當日紀錄</button>
+    <button class="btn btn-clear" @click="logout">登出</button>
   </div>
+  <div v-if="store.error" class="error-bar">{{ store.error }}</div>
 </template>

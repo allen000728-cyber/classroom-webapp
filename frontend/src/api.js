@@ -1,16 +1,28 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-const TOKEN_KEY = 'classroom_teacher_token'
+const SESSION_KEY = 'classroom_session'
+
+function readSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY)) || {}
+  } catch {
+    return {}
+  }
+}
+
+export function getSession() {
+  return readSession()
+}
+
+export function setSession(session) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+}
+
+export function clearSession() {
+  localStorage.removeItem(SESSION_KEY)
+}
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY) || ''
-}
-
-export function setToken(token) {
-  localStorage.setItem(TOKEN_KEY, token)
-}
-
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY)
+  return readSession().token || ''
 }
 
 async function request(method, path, body) {

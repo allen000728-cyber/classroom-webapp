@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
-import { requireTeacher } from '../middleware/auth.js'
+import { requireAuth, requireTeacher } from '../middleware/auth.js'
 import { asyncHandler } from '../asyncHandler.js'
 
 export const router = Router()
@@ -16,30 +16,36 @@ function requireValidDate(req, res, next) {
 
 router.param('date', requireValidDate)
 
-// GET /api/day/:date — 公開，把某一天的點名/作業資料整理成一份回應
+// GET /api/day/:date — 需登入；把某一天的點名/作業資料整理成一份回應
 // 用座號 (seat_no) 當 key，跟前端 store.js 的 roll[]/sub[] 概念直接對應
-router.get('/:date', asyncHandler(async (req, res) => {
+// 老師看全班，家長只看得到自己小孩那一筆（notes/assignments 是全班共用資訊，維持不篩選）
+router.get('/:date', requireAuth, asyncHandler(async (req, res) => {
   const { date } = req.params
+  const scopeToStudentId = req.user.role === 'parent' ? req.user.studentId : null
+
+  const attendanceQuery = scopeToStudentId
+    ? `SELECT s.seat_no, a.status FROM attendance_records a JOIN students s ON s.id = a.student_id
+       WHERE a.date = $1 AND s.id = $2`
+    : `SELECT s.seat_no, a.status FROM attendance_records a JOIN students s ON s.id = a.student_id
+       WHERE a.date = $1`
+  const attendanceParams = scopeToStudentId ? [date, scopeToStudentId] : [date]
 
   const [notesRes, attendanceRes, assignmentsRes] = await Promise.all([
     pool.query('SELECT notes FROM daily_notes WHERE date = $1', [date]),
-    pool.query(
-      `SELECT s.seat_no, a.status
-       FROM attendance_records a JOIN students s ON s.id = a.student_id
-       WHERE a.date = $1`,
-      [date]
-    ),
+    pool.query(attendanceQuery, attendanceParams),
     pool.query('SELECT id, name, seq FROM assignments WHERE date = $1 ORDER BY seq', [date]),
   ])
 
   const assignmentIds = assignmentsRes.rows.map((a) => a.id)
+  const submissionsQuery = scopeToStudentId
+    ? `SELECT hs.assignment_id, s.seat_no, hs.missing FROM homework_submissions hs JOIN students s ON s.id = hs.student_id
+       WHERE hs.assignment_id = ANY($1::int[]) AND s.id = $2`
+    : `SELECT hs.assignment_id, s.seat_no, hs.missing FROM homework_submissions hs JOIN students s ON s.id = hs.student_id
+       WHERE hs.assignment_id = ANY($1::int[])`
+  const submissionsParams = scopeToStudentId ? [assignmentIds, scopeToStudentId] : [assignmentIds]
+
   const submissionsRes = assignmentIds.length
-    ? await pool.query(
-        `SELECT hs.assignment_id, s.seat_no, hs.missing
-         FROM homework_submissions hs JOIN students s ON s.id = hs.student_id
-         WHERE hs.assignment_id = ANY($1::int[])`,
-        [assignmentIds]
-      )
+    ? await pool.query(submissionsQuery, submissionsParams)
     : { rows: [] }
 
   const attendance = {}

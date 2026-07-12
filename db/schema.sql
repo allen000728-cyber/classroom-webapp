@@ -38,3 +38,10 @@ CREATE TABLE teachers (
   username      text NOT NULL UNIQUE,
   password_hash text NOT NULL
 );
+
+CREATE TABLE parents (
+  id            serial PRIMARY KEY,
+  student_id    integer NOT NULL UNIQUE REFERENCES students(id),
+  username      text NOT NULL UNIQUE,
+  password_hash text NOT NULL
+);

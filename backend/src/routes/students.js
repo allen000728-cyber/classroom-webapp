@@ -1,12 +1,19 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
-import { requireTeacher } from '../middleware/auth.js'
+import { requireAuth, requireTeacher } from '../middleware/auth.js'
 import { asyncHandler } from '../asyncHandler.js'
 
 export const router = Router()
 
-// GET /api/students — 公開，家長也看得到座位表
-router.get('/', asyncHandler(async (req, res) => {
+// GET /api/students — 需登入；老師看全班，家長只看得到自己小孩那一筆
+router.get('/', requireAuth, asyncHandler(async (req, res) => {
+  if (req.user.role === 'parent') {
+    const { rows } = await pool.query(
+      'SELECT id, seat_no, active FROM students WHERE id = $1',
+      [req.user.studentId]
+    )
+    return res.json(rows)
+  }
   const { rows } = await pool.query(
     'SELECT id, seat_no, active FROM students ORDER BY seat_no'
   )

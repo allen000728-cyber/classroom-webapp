@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { apiGet, apiPost, apiPut, apiPatch, apiDelete, getToken, setToken, clearToken } from './api'
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete, getSession, setSession, clearSession } from './api'
 
 function todayStr() {
   const d = new Date()
@@ -7,6 +7,8 @@ function todayStr() {
     String(d.getMonth() + 1).padStart(2, '0') + '-' +
     String(d.getDate()).padStart(2, '0')
 }
+
+const session = getSession()
 
 export const store = reactive({
   date: todayStr(),
@@ -17,7 +19,9 @@ export const store = reactive({
   submissions: {},    // { [assignmentId]: { [seat_no]: boolean } }
   countInput: 28,
   excludedInput: '',
-  token: getToken(),
+  token: session.token || '',
+  role: session.role || '',     // 'teacher' | 'parent'
+  seatNo: session.seatNo || null, // 家長登入時，自己小孩的座號
   loading: false,
   saveLabel: '儲存',
   error: '',
@@ -166,17 +170,21 @@ export function visibleStudents() {
   return store.students.filter(s => s.active).slice().sort((a, b) => a.seat_no - b.seat_no)
 }
 
-export function teacherLogin(username, password) {
+export function login(username, password) {
   return withErrorHandling(async () => {
-    const { token } = await apiPost('/api/auth/login', { username, password })
-    setToken(token)
+    const { token, role, seatNo } = await apiPost('/api/auth/login', { username, password })
+    setSession({ token, role, seatNo })
     store.token = token
+    store.role = role
+    store.seatNo = seatNo || null
   })
 }
 
-export function teacherLogout() {
-  clearToken()
+export function logout() {
+  clearSession()
   store.token = ''
+  store.role = ''
+  store.seatNo = null
 }
 
 export const ROLL_LABEL = ['', '到', '缺', '假']
