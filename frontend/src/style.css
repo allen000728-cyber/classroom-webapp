@@ -471,7 +471,7 @@ th.th-num    { background: #fff; color: var(--text-mute); font-size: 12px; font-
 th.th-sub-g  { background: var(--status-missing-bg); color: oklch(45% 0.15 25); font-weight: 700; border-radius: 10px 10px 0 0; }
 th.th-sub    { background: oklch(98% 0.005 75); font-size: 12px; }
 
-td.td-num {
+table.hw-tbl td.td-num {
   font-family: 'Baloo 2', sans-serif;
   font-weight: 700;
   color: var(--text-soft);
