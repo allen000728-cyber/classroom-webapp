@@ -14,6 +14,9 @@ async function submit() {
 
 <template>
   <div class="login-page">
+    <div class="blob blob-a"></div>
+    <div class="blob blob-b"></div>
+    <div class="blob blob-c"></div>
     <div class="login-card">
       <h1>班級日常管理</h1>
       <p class="login-hint">老師或家長請登入查看點名 / 作業狀況</p>

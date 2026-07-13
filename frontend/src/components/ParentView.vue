@@ -30,11 +30,14 @@ function onDateChange(e) {
     <div class="parent-header">
       <span class="lbl">日期：</span>
       <input type="date" :value="store.date" @change="onDateChange">
+      <div style="flex:1;"></div>
       <button class="btn btn-clear" @click="logout">登出</button>
     </div>
 
     <div v-if="store.error" class="error-bar">{{ store.error }}</div>
 
+    <div class="blob blob-a"></div>
+    <div class="blob blob-b"></div>
     <div class="parent-card" v-if="child">
       <h2>座號 {{ child.seat_no }} 的狀況</h2>
 
@@ -48,7 +51,7 @@ function onDateChange(e) {
 
       <div class="parent-row">
         <span class="parent-row-lbl">出席狀況</span>
-        <span>{{ rollLabel }}</span>
+        <span class="chip" style="background:oklch(93% 0.02 260); color:oklch(45% 0.02 260);">{{ rollLabel }}</span>
       </div>
 
       <div class="parent-row" v-if="!store.assignments.length">
@@ -58,7 +61,7 @@ function onDateChange(e) {
       <ul class="parent-hw-list" v-else>
         <li v-for="(a, i) in store.assignments" :key="a.id">
           <span>{{ a.name || ('項目' + (i + 1)) }}</span>
-          <span :class="isMissing(a.id) ? 'hw-missing' : 'hw-done'">
+          <span class="chip" :class="isMissing(a.id) ? 'hw-missing' : 'hw-done'">
             {{ isMissing(a.id) ? '缺交' : '已繳交' }}
           </span>
         </li>

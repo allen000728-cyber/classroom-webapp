@@ -16,7 +16,7 @@ const rowCount = computed(() => Math.max(0, ...chunks.value.map((c) => c.length)
 const colCount = computed(() => store.assignments.length || 1)
 
 function boundaryStyle(chunkIndex) {
-  return chunkIndex > 0 ? 'border-left:3px solid #9fa8da;' : ''
+  return chunkIndex > 0 ? 'border-left:2px solid var(--border);' : ''
 }
 
 function assignLabel(a, i) {
@@ -37,11 +37,10 @@ function onNameInput(assignment, e) {
 
 <template>
   <div class="hw">
-    <div class="panel-hd">作業繳交區</div>
-
-    <div class="assign-bar">
-      <span class="lbl">作業項目：</span>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+    <div class="panel-hd-row">
+      <div class="panel-hd">作業繳交區</div>
+      <div class="assign-bar">
+        <span class="lbl">作業項目：</span>
         <div class="assign-item" v-for="(a, i) in store.assignments" :key="a.id">
           <input
             type="text"
@@ -90,9 +89,9 @@ function onNameInput(assignment, e) {
                   <button
                     class="tog"
                     :class="{ 'tok-sub': missing(chunk[r - 1].seat_no, a.id) }"
-                    title="點擊：標記缺交（未繳交）"
+                    :title="missing(chunk[r - 1].seat_no, a.id) ? '缺交（點擊標記已繳交）' : '點擊：標記缺交（未繳交）'"
                     @click="toggleSub(chunk[r - 1].seat_no, a.id)"
-                  >{{ missing(chunk[r - 1].seat_no, a.id) ? '交' : '' }}</button>
+                  ></button>
                 </td>
               </template>
               <td v-else :colspan="colCount" :style="boundaryStyle(ci)"></td>
@@ -104,10 +103,10 @@ function onNameInput(assignment, e) {
 
     <div class="legend">
       <strong>說明：</strong>
-      <div class="li"><span class="ld" style="background:#f44336;border:1.5px solid #b71c1c;"></span>缺交 = 未繳交（點擊標記）</div>
-      <div class="li"><span class="ld" style="background:#43a047;border:1.5px solid #2e7d32;"></span>到 = 已到校</div>
-      <div class="li"><span class="ld" style="background:#e53935;border:1.5px solid #b71c1c;"></span>缺 = 缺席</div>
-      <div class="li"><span class="ld" style="background:#fb8c00;border:1.5px solid #e65100;"></span>假 = 請假</div>
+      <div class="li"><span class="ld" style="background:var(--status-missing);"></span>缺交 = 未繳交（點擊標記）</div>
+      <div class="li"><span class="ld" style="background:var(--status-present);"></span>到 = 已到校</div>
+      <div class="li"><span class="ld" style="background:var(--status-absent);"></span>缺 = 缺席</div>
+      <div class="li"><span class="ld" style="background:var(--status-leave);"></span>假 = 請假</div>
     </div>
   </div>
 </template>

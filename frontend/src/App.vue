@@ -18,13 +18,13 @@ watch(
 
 <template>
   <Login v-if="!store.token" />
-  <template v-else-if="store.role === 'teacher'">
+  <div v-else-if="store.role === 'teacher'" class="teacher-shell">
     <HeaderBar />
     <NotesBar />
     <div class="main">
       <RollPanel />
       <HomeworkPanel />
     </div>
-  </template>
+  </div>
   <ParentView v-else />
 </template>

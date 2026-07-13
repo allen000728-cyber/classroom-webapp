@@ -4,9 +4,9 @@ import { store, cycleRoll, visibleStudents, ROLL_LABEL, ROLL_CLASS } from '../st
 
 const seats = computed(() => visibleStudents())
 
-function label(seatNo) {
+function statusTitle(seatNo) {
   const s = store.attendance[seatNo] || 0
-  return seatNo + (s ? '\n' + ROLL_LABEL[s] : '')
+  return s ? ROLL_LABEL[s] : '尚未點名'
 }
 </script>
 
@@ -20,8 +20,9 @@ function label(seatNo) {
         :key="s.id"
         class="roll-btn"
         :class="ROLL_CLASS[store.attendance[s.seat_no] || 0]"
+        :title="statusTitle(s.seat_no)"
         @click="cycleRoll(s.seat_no)"
-      >{{ label(s.seat_no) }}</button>
+      >{{ s.seat_no }}</button>
     </div>
   </div>
 </template>

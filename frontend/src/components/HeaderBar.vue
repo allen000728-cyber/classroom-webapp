@@ -38,7 +38,8 @@ function onCountChange(e) {
       @change="applyExcluded"
     >
 
-    <button class="btn btn-clear" @click="clearDay">清除當日紀錄</button>
+    <div style="flex:1;"></div>
+    <button class="btn btn-warn" @click="clearDay">清除當日紀錄</button>
     <button class="btn btn-clear" @click="logout">登出</button>
   </div>
   <div v-if="store.error" class="error-bar">{{ store.error }}</div>
