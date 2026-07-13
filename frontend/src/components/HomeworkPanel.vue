@@ -60,18 +60,17 @@ function onNameInput(assignment, e) {
         <thead>
           <tr>
             <template v-for="(_, ci) in chunks" :key="'gh' + ci">
-              <th class="th-num" rowspan="2" :style="boundaryStyle(ci)">#</th>
+              <th class="th-num" rowspan="2">#</th>
               <th class="th-sub-g" :colspan="colCount">缺交（未繳交）</th>
             </template>
           </tr>
           <tr>
             <template v-for="(_, ci) in chunks" :key="'sh' + ci">
-              <th v-if="!store.assignments.length" class="th-sub" :style="boundaryStyle(ci)"></th>
+              <th v-if="!store.assignments.length" class="th-sub"></th>
               <th
                 v-for="(a, ai) in store.assignments"
                 :key="'shc' + ci + '-' + a.id"
                 class="th-sub"
-                :style="ai === 0 ? boundaryStyle(ci) : ''"
               >{{ assignLabel(a, ai) }}</th>
             </template>
           </tr>
@@ -82,9 +81,8 @@ function onNameInput(assignment, e) {
               <td class="td-num" :style="boundaryStyle(ci)">{{ chunk[r - 1] ? chunk[r - 1].seat_no : '' }}</td>
               <template v-if="chunk[r - 1] && store.assignments.length">
                 <td
-                  v-for="(a, ai) in store.assignments"
+                  v-for="a in store.assignments"
                   :key="'cell' + ci + '-' + a.id"
-                  :style="ai === 0 ? boundaryStyle(ci) : ''"
                 >
                   <button
                     class="tog"
