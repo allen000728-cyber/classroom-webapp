@@ -10,9 +10,13 @@ import { router as notesRouter } from './routes/notes.js'
 
 const app = express()
 
-// Render sits behind a reverse proxy; trust its X-Forwarded-For so
-// express-rate-limit keys off the real client IP instead of the proxy's.
-app.set('trust proxy', 1)
+// Render's traffic passes through more than one hop of infra proxy (their own
+// edge is Cloudflare-backed) before reaching this app, and the exact hop count
+// isn't documented/guaranteed. trust proxy:1 was tested in production and
+// resolved req.ip to Cloudflare's own edge IP (a different one per request)
+// instead of the real client — trusting the whole XFF chain and taking the
+// left-most entry actually gets the real client IP here.
+app.set('trust proxy', true)
 
 app.use(cors())
 app.use(express.json())
