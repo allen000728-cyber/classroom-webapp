@@ -48,3 +48,12 @@ CREATE TABLE parents (
   username      text NOT NULL UNIQUE,
   password_hash text NOT NULL
 );
+
+-- 登入速率限制用；共用資料庫是為了在多台/多個 process 的部署環境下
+-- 仍然算同一個計數（記憶體內計數在那種環境下每個 process 各算各的，不準）
+CREATE TABLE login_attempts (
+  id           serial PRIMARY KEY,
+  ip           text NOT NULL,
+  attempted_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_login_attempts_ip_time ON login_attempts(ip, attempted_at);

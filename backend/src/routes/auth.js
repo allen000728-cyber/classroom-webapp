@@ -1,9 +1,9 @@
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
-import rateLimit from 'express-rate-limit'
 import { pool } from '../db.js'
 import { verifyPassword, hashPassword } from '../password.js'
 import { asyncHandler } from '../asyncHandler.js'
+import { loginRateLimiter } from '../rateLimiter.js'
 
 export const router = Router()
 
@@ -11,17 +11,9 @@ export const router = Router()
 // 兩種情況的回應時間一樣，不會被拿來側錄猜帳號。內容不重要，反正永遠不會真的用來登入。
 const DUMMY_HASH = await hashPassword('not-a-real-account-' + Math.random())
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: '嘗試登入次數過多，請稍後再試' },
-})
-
 // POST /api/auth/login { username, password } — 公開，驗證帳密後發一個 7 天效期的 JWT
 // 先查 teachers，查不到再查 parents（一個帳號只會是其中一種身份）
-router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
+router.post('/login', asyncHandler(loginRateLimiter), asyncHandler(async (req, res) => {
   const { username, password } = req.body
   if (!username || !password) {
     return res.status(400).json({ error: '需要 username 和 password' })
