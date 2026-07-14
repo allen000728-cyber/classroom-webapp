@@ -10,6 +10,10 @@ import { router as notesRouter } from './routes/notes.js'
 
 const app = express()
 
+// Render sits behind a reverse proxy; trust its X-Forwarded-For so
+// express-rate-limit keys off the real client IP instead of the proxy's.
+app.set('trust proxy', 1)
+
 app.use(cors())
 app.use(express.json())
 
