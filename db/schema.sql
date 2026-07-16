@@ -1,5 +1,13 @@
 -- 班級網頁 資料庫結構 (PostgreSQL / Neon)
 
+-- 目前帶的班級；同一時間只會有一列（沒有列 = 老師還沒建班）。
+-- 班級畢業時整批清空重來，不保留歷史班級紀錄。
+CREATE TABLE class_info (
+  id           serial PRIMARY KEY,
+  grade        integer NOT NULL,
+  class_number integer NOT NULL
+);
+
 CREATE TABLE students (
   id      serial PRIMARY KEY,
   seat_no integer NOT NULL UNIQUE,

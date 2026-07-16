@@ -1,6 +1,7 @@
 <script setup>
 import { watch } from 'vue'
 import Login from './components/Login.vue'
+import ClassSetup from './components/ClassSetup.vue'
 import HeaderBar from './components/HeaderBar.vue'
 import NotesBar from './components/NotesBar.vue'
 import RollPanel from './components/RollPanel.vue'
@@ -19,12 +20,15 @@ watch(
 <template>
   <Login v-if="!store.token" />
   <div v-else-if="store.role === 'teacher'" class="teacher-shell">
-    <HeaderBar />
-    <NotesBar />
-    <div class="main">
-      <RollPanel />
-      <HomeworkPanel />
-    </div>
+    <ClassSetup v-if="!store.classInfo" />
+    <template v-else>
+      <HeaderBar />
+      <NotesBar />
+      <div class="main">
+        <RollPanel />
+        <HomeworkPanel />
+      </div>
+    </template>
   </div>
   <ParentView v-else />
 </template>

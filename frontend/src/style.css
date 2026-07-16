@@ -178,6 +178,7 @@ body {
 .chip { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
 .hw-missing { color: oklch(35% 0.13 25); background: oklch(93% 0.06 25); }
 .hw-done { color: oklch(35% 0.13 150); background: oklch(90% 0.12 150); }
+.class-chip { background: var(--accent); color: var(--accent-text); font-family: 'Baloo 2', sans-serif; }
 
 /* ── Header ── */
 .teacher-shell {

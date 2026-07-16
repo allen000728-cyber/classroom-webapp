@@ -11,6 +11,7 @@ function todayStr() {
 const session = getSession()
 
 export const store = reactive({
+  classInfo: null,    // {grade, class_number} | null（null = 老師還沒建班）
   date: todayStr(),
   notes: [],          // [{id, text, seq}]
   students: [],       // [{id, seat_no, active}]
@@ -69,10 +70,43 @@ export async function loadDay(date) {
   }
 }
 
+export async function loadClassInfo() {
+  store.classInfo = await apiGet('/api/class')
+}
+
 export async function init() {
   await withErrorHandling(async () => {
+    await loadClassInfo()
+    if (store.classInfo) {
+      await loadStudents()
+      await loadDay(store.date)
+    }
+  })
+}
+
+export function createClass(grade, classNumber) {
+  return withErrorHandling(async () => {
+    store.classInfo = await apiPost('/api/class', { grade, classNumber })
     await loadStudents()
     await loadDay(store.date)
+  })
+}
+
+export function graduateClass() {
+  const answer = prompt(
+    '確定要讓這個班級畢業嗎？\n\n' +
+    '這個動作會永久刪除所有學生、點名、作業、待辦事項與家長帳號資料，無法復原！\n\n' +
+    '請輸入「畢業」以確認：'
+  )
+  if (answer !== '畢業') return
+  return withErrorHandling(async () => {
+    await apiPost('/api/class/graduate', {})
+    store.classInfo = null
+    store.students = []
+    store.attendance = {}
+    store.assignments = []
+    store.submissions = {}
+    store.notes = []
   })
 }
 
