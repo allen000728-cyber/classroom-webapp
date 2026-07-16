@@ -20,7 +20,8 @@ watch(
 <template>
   <Login v-if="!store.token" />
   <div v-else-if="store.role === 'teacher'" class="teacher-shell">
-    <ClassSetup v-if="!store.classInfo" />
+    <div v-if="!store.classInfoReady" class="login-page"><p class="login-hint">載入中…</p></div>
+    <ClassSetup v-else-if="!store.classInfo" />
     <template v-else>
       <HeaderBar />
       <NotesBar />

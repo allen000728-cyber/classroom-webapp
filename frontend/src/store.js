@@ -12,6 +12,7 @@ const session = getSession()
 
 export const store = reactive({
   classInfo: null,    // {grade, class_number} | null（null = 老師還沒建班）
+  classInfoReady: false, // 還沒問過後端之前，classInfo 是 null 不代表真的沒班級
   date: todayStr(),
   notes: [],          // [{id, text, seq}]
   students: [],       // [{id, seat_no, active}]
@@ -75,6 +76,7 @@ export async function loadClassInfo() {
 }
 
 export async function init() {
+  store.classInfoReady = false
   await withErrorHandling(async () => {
     await loadClassInfo()
     if (store.classInfo) {
@@ -82,6 +84,7 @@ export async function init() {
       await loadDay(store.date)
     }
   })
+  store.classInfoReady = true
 }
 
 export function createClass(grade, classNumber) {
