@@ -47,6 +47,34 @@ body {
   pointer-events: none;
 }
 
+/* ── Loading overlay ── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: #fdf8f2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 999;
+}
+.loading-text {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #6b6b6b;
+}
+@keyframes chalkDraw { 0% { stroke-dashoffset: 40; } 60%, 100% { stroke-dashoffset: 0; } }
+@keyframes headNod { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-4deg); } }
+@keyframes armPoint { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-25deg); } }
+.chalk-line { animation: chalkDraw 1.4s ease-in-out infinite; }
+.teacher-head { animation: headNod 1.4s ease-in-out infinite; transform-origin: 92px 34px; }
+.teacher-arm { animation: armPoint 1.4s ease-in-out infinite; transform-origin: 84px 52px; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity .3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
 /* ── Login page ── */
 .login-page {
   flex: 1;
