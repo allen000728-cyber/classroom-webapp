@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { store, clearDay, applyExcluded, setStudentCount, changeDate, logout, graduateClass } from '../store'
+import { store, clearDay, setStudentCount, changeDate, logout, graduateClass } from '../store'
 import StudentEditor from './StudentEditor.vue'
 
 const countInput = ref(store.countInput)
@@ -31,16 +31,6 @@ function onCountChange(e) {
       v-model="countInput"
       title="設定學生人數後按 Enter 重建"
       @change="onCountChange"
-    >
-
-    <span class="lbl-small">排除座號：</span>
-    <input
-      type="text"
-      id="inp-excluded"
-      v-model="store.excludedInput"
-      placeholder="如：14 或 14,22"
-      title="輸入不存在的座號（逗號分隔），按 Enter 套用"
-      @change="applyExcluded"
     >
 
     <div style="flex:1;"></div>

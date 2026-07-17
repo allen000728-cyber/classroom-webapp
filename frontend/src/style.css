@@ -259,7 +259,6 @@ body {
   white-space: nowrap;
 }
 #inp-count { width: 50px; text-align: center; }
-#inp-excluded { width: 120px; }
 
 .btn {
   padding: 9px 18px;

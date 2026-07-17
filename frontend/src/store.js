@@ -20,7 +20,6 @@ export const store = reactive({
   assignments: [],    // [{id, name, seq}]
   submissions: {},    // { [assignmentId]: { [seat_no]: boolean } }
   countInput: 28,
-  excludedInput: '',
   token: session.token || '',
   role: session.role || '',     // 'teacher' | 'parent'
   seatNo: session.seatNo || null, // 家長登入時，自己小孩的座號
@@ -37,10 +36,6 @@ async function withErrorHandling(fn) {
   }
 }
 
-function syncExcludedInputFromStudents() {
-  store.excludedInput = store.students.filter(s => !s.active).map(s => s.seat_no).join(', ')
-}
-
 function syncCountInputFromStudents() {
   store.countInput = store.students.length
     ? Math.max(...store.students.map(s => s.seat_no))
@@ -49,7 +44,6 @@ function syncCountInputFromStudents() {
 
 export async function loadStudents() {
   store.students = await apiGet('/api/students')
-  syncExcludedInputFromStudents()
   syncCountInputFromStudents()
 }
 
@@ -201,21 +195,6 @@ export function setStudentCount(v) {
     }
     for (const s of store.students) {
       if (s.seat_no > count && s.active) await apiPatch(`/api/students/${s.id}`, { active: false })
-    }
-    await loadStudents()
-  })
-}
-
-export function applyExcluded() {
-  const excludedSeats = new Set(
-    store.excludedInput.split(/[,，\s]+/)
-      .map(v => parseInt(v.trim(), 10))
-      .filter(v => !isNaN(v))
-  )
-  return withErrorHandling(async () => {
-    for (const s of store.students) {
-      const shouldBeActive = !excludedSeats.has(s.seat_no)
-      if (s.active !== shouldBeActive) await apiPatch(`/api/students/${s.id}`, { active: shouldBeActive })
     }
     await loadStudents()
   })
