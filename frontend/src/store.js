@@ -19,7 +19,6 @@ export const store = reactive({
   attendance: {},     // { [seat_no]: status(0-3) }
   assignments: [],    // [{id, name, seq}]
   submissions: {},    // { [assignmentId]: { [seat_no]: boolean } }
-  countInput: 28,
   token: session.token || '',
   role: session.role || '',     // 'teacher' | 'parent'
   seatNo: session.seatNo || null, // 家長登入時，自己小孩的座號
@@ -36,15 +35,8 @@ async function withErrorHandling(fn) {
   }
 }
 
-function syncCountInputFromStudents() {
-  store.countInput = store.students.length
-    ? Math.max(...store.students.map(s => s.seat_no))
-    : 28
-}
-
 export async function loadStudents() {
   store.students = await apiGet('/api/students')
-  syncCountInputFromStudents()
 }
 
 export function addStudent(seatNo, name) {
@@ -183,21 +175,6 @@ export function toggleSub(seatNo, assignmentId) {
   const next = !store.submissions[assignmentId][seatNo]
   store.submissions[assignmentId][seatNo] = next
   withErrorHandling(() => apiPut(`/api/assignments/${assignmentId}/submissions`, { seatNo, missing: next }))
-}
-
-export function setStudentCount(v) {
-  const count = parseInt(v, 10)
-  if (!count || count < 1 || count > 60) { syncCountInputFromStudents(); return }
-  return withErrorHandling(async () => {
-    const existing = new Map(store.students.map(s => [s.seat_no, s]))
-    for (let seat = 1; seat <= count; seat++) {
-      if (!existing.has(seat)) await apiPost('/api/students', { seatNo: seat })
-    }
-    for (const s of store.students) {
-      if (s.seat_no > count && s.active) await apiPatch(`/api/students/${s.id}`, { active: false })
-    }
-    await loadStudents()
-  })
 }
 
 export function clearDay() {

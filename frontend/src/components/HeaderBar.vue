@@ -1,19 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { store, clearDay, setStudentCount, changeDate, logout, graduateClass } from '../store'
+import { ref } from 'vue'
+import { store, clearDay, changeDate, logout, graduateClass } from '../store'
 import StudentEditor from './StudentEditor.vue'
-
-const countInput = ref(store.countInput)
-watch(() => store.countInput, (v) => { countInput.value = v })
 
 const showStudentEditor = ref(false)
 
 function onDateChange(e) {
   changeDate(e.target.value)
-}
-
-function onCountChange(e) {
-  setStudentCount(e.target.value)
 }
 </script>
 
@@ -23,15 +16,6 @@ function onCountChange(e) {
 
     <span class="lbl">日期：</span>
     <input type="date" :value="store.date" @change="onDateChange">
-
-    <span class="lbl-small">學生人數：</span>
-    <input
-      type="text"
-      id="inp-count"
-      v-model="countInput"
-      title="設定學生人數後按 Enter 重建"
-      @change="onCountChange"
-    >
 
     <div style="flex:1;"></div>
     <button class="btn btn-warn" @click="clearDay">清除當日紀錄</button>

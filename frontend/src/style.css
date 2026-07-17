@@ -252,14 +252,6 @@ body {
 }
 .header input:focus, .notes-bar input:focus { border-color: var(--primary); }
 
-.header .lbl-small {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-soft);
-  white-space: nowrap;
-}
-#inp-count { width: 50px; text-align: center; }
-
 .btn {
   padding: 9px 18px;
   border-radius: 12px;
