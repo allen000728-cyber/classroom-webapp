@@ -53,6 +53,30 @@ export async function loadStudents() {
   syncCountInputFromStudents()
 }
 
+export function addStudent(seatNo, name) {
+  return withErrorHandling(async () => {
+    const created = await apiPost('/api/students', { seatNo, name })
+    store.students.push(created)
+  })
+}
+
+export function updateStudent(id, fields) {
+  return withErrorHandling(async () => {
+    const updated = await apiPatch(`/api/students/${id}`, fields)
+    const idx = store.students.findIndex((s) => s.id === id)
+    if (idx !== -1) store.students[idx] = updated
+  })
+}
+
+export function deleteStudent(student) {
+  const label = student.name ? `座號 ${student.seat_no}（${student.name}）` : `座號 ${student.seat_no}`
+  if (!confirm(`確定要刪除${label}嗎？\n這個學生的點名、作業紀錄與家長帳號都會一併永久刪除，無法復原！`)) return
+  return withErrorHandling(async () => {
+    await apiDelete(`/api/students/${student.id}`)
+    store.students = store.students.filter((s) => s.id !== student.id)
+  })
+}
+
 let latestRequestedDate = null
 
 export async function loadDay(date) {

@@ -1,9 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { store, clearDay, applyExcluded, setStudentCount, changeDate, logout, graduateClass } from '../store'
+import StudentEditor from './StudentEditor.vue'
 
 const countInput = ref(store.countInput)
 watch(() => store.countInput, (v) => { countInput.value = v })
+
+const showStudentEditor = ref(false)
 
 function onDateChange(e) {
   changeDate(e.target.value)
@@ -42,8 +45,10 @@ function onCountChange(e) {
 
     <div style="flex:1;"></div>
     <button class="btn btn-warn" @click="clearDay">清除當日紀錄</button>
+    <button class="btn btn-warn" @click="showStudentEditor = true">編輯學生</button>
     <button class="btn btn-clear" @click="graduateClass">班級畢業</button>
     <button class="btn btn-clear" @click="logout">登出</button>
   </div>
   <div v-if="store.error" class="error-bar">{{ store.error }}</div>
+  <StudentEditor v-if="showStudentEditor" @close="showStudentEditor = false" />
 </template>
