@@ -1,27 +1,37 @@
 -- 班級網頁 資料庫結構 (PostgreSQL / Neon)
 
--- 目前帶的班級；同一時間只會有一列（沒有列 = 老師還沒建班）。
--- 班級畢業時整批清空重來，不保留歷史班級紀錄。
+CREATE TABLE teachers (
+  id            serial PRIMARY KEY,
+  username      text NOT NULL UNIQUE,
+  password_hash text NOT NULL
+);
+
+-- 每個老師最多同時帶一個班級（teacher_id 唯一）；老師畢業班級時整批清空這個班的
+-- 資料重來，不保留歷史班級紀錄。同一個 DB 可以有多個老師，各自的班級資料互不可見。
 CREATE TABLE class_info (
   id           serial PRIMARY KEY,
+  teacher_id   integer NOT NULL UNIQUE REFERENCES teachers(id) ON DELETE CASCADE,
   grade        integer NOT NULL,
   class_number integer NOT NULL
 );
 
 CREATE TABLE students (
-  id      serial PRIMARY KEY,
-  seat_no integer NOT NULL UNIQUE,
-  name    text NOT NULL DEFAULT '',
-  active  boolean NOT NULL DEFAULT true
+  id       serial PRIMARY KEY,
+  class_id integer NOT NULL REFERENCES class_info(id) ON DELETE CASCADE,
+  seat_no  integer NOT NULL,
+  name     text NOT NULL DEFAULT '',
+  active   boolean NOT NULL DEFAULT true,
+  UNIQUE (class_id, seat_no) -- 座號只需要同一班內唯一，不同班可以重複用同一個座號
 );
 
 CREATE TABLE daily_notes (
-  id   serial PRIMARY KEY,
-  date date NOT NULL,
-  text text NOT NULL,
-  seq  integer NOT NULL
+  id       serial PRIMARY KEY,
+  class_id integer NOT NULL REFERENCES class_info(id) ON DELETE CASCADE,
+  date     date NOT NULL,
+  text     text NOT NULL,
+  seq      integer NOT NULL
 );
-CREATE INDEX idx_daily_notes_date ON daily_notes(date);
+CREATE INDEX idx_daily_notes_class_date ON daily_notes(class_id, date);
 
 CREATE TABLE attendance_records (
   date       date NOT NULL,
@@ -31,24 +41,19 @@ CREATE TABLE attendance_records (
 );
 
 CREATE TABLE assignments (
-  id   serial PRIMARY KEY,
-  date date NOT NULL,
-  name text NOT NULL,
-  seq  integer NOT NULL
+  id       serial PRIMARY KEY,
+  class_id integer NOT NULL REFERENCES class_info(id) ON DELETE CASCADE,
+  date     date NOT NULL,
+  name     text NOT NULL,
+  seq      integer NOT NULL
 );
-CREATE INDEX idx_assignments_date ON assignments(date);
+CREATE INDEX idx_assignments_class_date ON assignments(class_id, date);
 
 CREATE TABLE homework_submissions (
   assignment_id integer NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
   student_id    integer NOT NULL REFERENCES students(id) ON DELETE CASCADE,
   missing       boolean NOT NULL DEFAULT false, -- true = 缺交
   PRIMARY KEY (assignment_id, student_id)
-);
-
-CREATE TABLE teachers (
-  id            serial PRIMARY KEY,
-  username      text NOT NULL UNIQUE,
-  password_hash text NOT NULL
 );
 
 CREATE TABLE parents (

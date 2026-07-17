@@ -5,13 +5,26 @@ import { asyncHandler } from '../asyncHandler.js'
 
 export const router = Router()
 
-// GET /api/class — 需登入；回傳目前班級的年級/班別，還沒建班則回傳 null
+// GET /api/class — 需登入；回傳自己班級的年級/班別，還沒建班則回傳 null
+// 老師看自己帶的班；家長看自己小孩所在的班
 router.get('/', requireAuth, asyncHandler(async (req, res) => {
-  const { rows } = await pool.query('SELECT grade, class_number FROM class_info LIMIT 1')
+  if (req.user.role === 'parent') {
+    const { rows } = await pool.query(
+      `SELECT ci.grade, ci.class_number FROM class_info ci
+       JOIN students s ON s.class_id = ci.id
+       WHERE s.id = $1`,
+      [req.user.studentId]
+    )
+    return res.json(rows[0] ?? null)
+  }
+  const { rows } = await pool.query(
+    'SELECT grade, class_number FROM class_info WHERE teacher_id = $1',
+    [req.user.teacherId]
+  )
   res.json(rows[0] ?? null)
 }))
 
-// POST /api/class { grade, classNumber } — 老師專用，建立班級（已經有班級的話擋掉）
+// POST /api/class { grade, classNumber } — 老師專用，建立班級（自己已經有班級的話擋掉）
 router.post('/', requireTeacher, asyncHandler(async (req, res) => {
   const grade = parseInt(req.body.grade, 10)
   const classNumber = parseInt(req.body.classNumber, 10)
@@ -19,36 +32,24 @@ router.post('/', requireTeacher, asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'grade 和 classNumber 必須是正整數' })
   }
 
-  const existing = await pool.query('SELECT 1 FROM class_info LIMIT 1')
-  if (existing.rows.length) {
-    return res.status(409).json({ error: '已經有班級了，請先讓班級畢業才能建立新班級' })
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO class_info (teacher_id, grade, class_number) VALUES ($1, $2, $3) RETURNING grade, class_number',
+      [req.user.teacherId, grade, classNumber]
+    )
+    res.status(201).json(rows[0])
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: '已經有班級了，請先讓班級畢業才能建立新班級' })
+    }
+    throw err
   }
-
-  const { rows } = await pool.query(
-    'INSERT INTO class_info (grade, class_number) VALUES ($1, $2) RETURNING grade, class_number',
-    [grade, classNumber]
-  )
-  res.status(201).json(rows[0])
 }))
 
 // POST /api/class/graduate — 老師專用，清空這個班級的所有資料（不可復原）
+// class_id/teacher_id 的外鍵都是 ON DELETE CASCADE，刪這一列就會連帶清掉學生、
+// 點名、作業、待辦事項、家長帳號與邀請碼，不用再手動一張一張刪
 router.post('/graduate', requireTeacher, asyncHandler(async (req, res) => {
-  const client = await pool.connect()
-  try {
-    await client.query('BEGIN')
-    await client.query('DELETE FROM homework_submissions')
-    await client.query('DELETE FROM attendance_records')
-    await client.query('DELETE FROM parents')
-    await client.query('DELETE FROM assignments')
-    await client.query('DELETE FROM daily_notes')
-    await client.query('DELETE FROM students')
-    await client.query('DELETE FROM class_info')
-    await client.query('COMMIT')
-  } catch (err) {
-    await client.query('ROLLBACK')
-    throw err
-  } finally {
-    client.release()
-  }
+  await pool.query('DELETE FROM class_info WHERE teacher_id = $1', [req.user.teacherId])
   res.status(204).end()
 }))
