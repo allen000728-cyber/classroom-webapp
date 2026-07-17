@@ -227,7 +227,7 @@ export function generateInvite(student) {
     const { code } = await apiPost(`/api/students/${student.id}/invite`, {})
     const link = `${window.location.origin}${import.meta.env.BASE_URL}?invite=${code}`
     const label = student.name ? `座號 ${student.seat_no}（${student.name}）` : `座號 ${student.seat_no}`
-    prompt(`把這個連結傳給${label}的家長，家長點開就能直接註冊帳號：`, link)
+    prompt(`把這個連結傳給${label}的家長，家長點開就能直接註冊帳號（24 小時內有效，過期要重新產生）：`, link)
   })
 }
 

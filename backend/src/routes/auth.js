@@ -68,11 +68,15 @@ router.post('/register-parent', asyncHandler(loginRateLimiter), asyncHandler(asy
   }
 
   const inviteRes = await pool.query(
-    'SELECT student_id FROM parent_invites WHERE code = $1',
+    'SELECT student_id, expires_at FROM parent_invites WHERE code = $1',
     [String(code).trim().toUpperCase()]
   )
   if (!inviteRes.rows.length) {
     return res.status(401).json({ error: '邀請連結無效或已經用過，請跟老師確認' })
+  }
+  if (new Date(inviteRes.rows[0].expires_at) < new Date()) {
+    await pool.query('DELETE FROM parent_invites WHERE student_id = $1', [inviteRes.rows[0].student_id])
+    return res.status(401).json({ error: '邀請連結已經過期，請跟老師要一組新的' })
   }
   const studentId = inviteRes.rows[0].student_id
 

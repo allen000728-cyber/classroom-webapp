@@ -96,12 +96,13 @@ router.post('/:id/invite', requireTeacher, asyncHandler(async (req, res) => {
   if (!student.rows.length) return res.status(404).json({ error: '找不到這個學生' })
 
   const code = randomBytes(4).toString('hex').toUpperCase()
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
   await pool.query(
-    `INSERT INTO parent_invites (student_id, code) VALUES ($1, $2)
-     ON CONFLICT (student_id) DO UPDATE SET code = EXCLUDED.code`,
-    [id, code]
+    `INSERT INTO parent_invites (student_id, code, expires_at) VALUES ($1, $2, $3)
+     ON CONFLICT (student_id) DO UPDATE SET code = EXCLUDED.code, expires_at = EXCLUDED.expires_at`,
+    [id, code, expiresAt]
   )
-  res.json({ code })
+  res.json({ code, expiresAt })
 }))
 
 // DELETE /api/students/:id — 老師專用，真的刪除這個學生（連同他的點名/作業/家長帳號一起刪，無法復原）

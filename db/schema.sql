@@ -59,11 +59,12 @@ CREATE TABLE parents (
 );
 
 -- 老師產生連結給家長自行註冊用；一個學生同時只有一組有效邀請碼，
--- 註冊成功後就刪掉（一次性）。
+-- 註冊成功後就刪掉（一次性），或是超過 expires_at 就視為失效。
 CREATE TABLE parent_invites (
   id         serial PRIMARY KEY,
   student_id integer NOT NULL UNIQUE REFERENCES students(id) ON DELETE CASCADE,
-  code       text NOT NULL UNIQUE
+  code       text NOT NULL UNIQUE,
+  expires_at timestamptz NOT NULL
 );
 
 -- 登入速率限制用；共用資料庫是為了在多台/多個 process 的部署環境下
