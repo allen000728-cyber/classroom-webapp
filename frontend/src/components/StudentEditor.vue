@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { store, addStudent, updateStudent, deleteStudent } from '../store'
+import { store, addStudent, updateStudent, deleteStudent, generateInvite } from '../store'
 
 defineEmits(['close'])
 
@@ -51,6 +51,7 @@ function onActiveChange(student, e) {
               <th>姓名</th>
               <th>啟用</th>
               <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -58,6 +59,7 @@ function onActiveChange(student, e) {
               <td><input type="text" class="student-edit-inp" :value="s.seat_no" @input="onSeatNoInput(s, $event)"></td>
               <td><input type="text" class="student-edit-inp" :value="s.name" placeholder="（未填）" @input="onNameInput(s, $event)"></td>
               <td><input type="checkbox" :checked="s.active" @change="onActiveChange(s, $event)"></td>
+              <td><button class="btn btn-warn student-invite-btn" title="產生家長註冊連結" @click="generateInvite(s)">邀請家長</button></td>
               <td><button class="btn-del-assign" title="刪除這個學生" @click="deleteStudent(s)">×</button></td>
             </tr>
           </tbody>

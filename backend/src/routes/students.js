@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { randomBytes } from 'crypto'
 import { pool } from '../db.js'
 import { requireAuth, requireTeacher } from '../middleware/auth.js'
 import { asyncHandler } from '../asyncHandler.js'
@@ -84,6 +85,23 @@ router.patch('/:id', requireTeacher, asyncHandler(async (req, res) => {
     }
     throw err
   }
+}))
+
+// POST /api/students/:id/invite — 老師專用，產生（或重新產生）這個學生的家長註冊邀請碼
+router.post('/:id/invite', requireTeacher, asyncHandler(async (req, res) => {
+  const id = parseInt(req.params.id, 10)
+  if (!id) return res.status(400).json({ error: 'id 必須是整數' })
+
+  const student = await pool.query('SELECT id FROM students WHERE id = $1', [id])
+  if (!student.rows.length) return res.status(404).json({ error: '找不到這個學生' })
+
+  const code = randomBytes(4).toString('hex').toUpperCase()
+  await pool.query(
+    `INSERT INTO parent_invites (student_id, code) VALUES ($1, $2)
+     ON CONFLICT (student_id) DO UPDATE SET code = EXCLUDED.code`,
+    [id, code]
+  )
+  res.json({ code })
 }))
 
 // DELETE /api/students/:id — 老師專用，真的刪除這個學生（連同他的點名/作業/家長帳號一起刪，無法復原）

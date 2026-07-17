@@ -59,3 +59,51 @@ router.post('/login', asyncHandler(loginRateLimiter), asyncHandler(async (req, r
   )
   res.json({ token, role: 'parent', seatNo: parent.seat_no })
 }))
+
+// POST /api/auth/register-parent { code, username, password } — 公開，家長拿邀請連結上的碼自行設定帳密
+router.post('/register-parent', asyncHandler(loginRateLimiter), asyncHandler(async (req, res) => {
+  const { code, username, password } = req.body
+  if (!code || !username || !password) {
+    return res.status(400).json({ error: '需要 code、username 和 password' })
+  }
+
+  const inviteRes = await pool.query(
+    'SELECT student_id FROM parent_invites WHERE code = $1',
+    [String(code).trim().toUpperCase()]
+  )
+  if (!inviteRes.rows.length) {
+    return res.status(401).json({ error: '邀請連結無效或已經用過，請跟老師確認' })
+  }
+  const studentId = inviteRes.rows[0].student_id
+
+  const teacherClash = await pool.query('SELECT 1 FROM teachers WHERE username = $1', [username])
+  if (teacherClash.rows.length) {
+    return res.status(409).json({ error: '這個帳號已經被使用了' })
+  }
+
+  const passwordHash = await hashPassword(password)
+
+  let parent
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO parents (student_id, username, password_hash) VALUES ($1, $2, $3)
+       ON CONFLICT (student_id) DO UPDATE SET username = EXCLUDED.username, password_hash = EXCLUDED.password_hash
+       RETURNING id, student_id`,
+      [studentId, username, passwordHash]
+    )
+    parent = rows[0]
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: '這個帳號已經被使用了' })
+    throw err
+  }
+
+  await pool.query('DELETE FROM parent_invites WHERE student_id = $1', [studentId])
+
+  const seatRes = await pool.query('SELECT seat_no FROM students WHERE id = $1', [studentId])
+  const token = jwt.sign(
+    { role: 'parent', parentId: parent.id, studentId, username },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  )
+  res.status(201).json({ token, role: 'parent', seatNo: seatRes.rows[0].seat_no })
+}))

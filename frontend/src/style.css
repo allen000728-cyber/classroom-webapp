@@ -610,3 +610,4 @@ table.student-edit-tbl {
   border-top: 2px dashed var(--border);
 }
 .student-add-row .student-edit-inp:first-child { width: 70px; flex-shrink: 0; }
+.student-invite-btn { padding: 5px 10px; font-size: 11px; white-space: nowrap; }

@@ -58,6 +58,14 @@ CREATE TABLE parents (
   password_hash text NOT NULL
 );
 
+-- 老師產生連結給家長自行註冊用；一個學生同時只有一組有效邀請碼，
+-- 註冊成功後就刪掉（一次性）。
+CREATE TABLE parent_invites (
+  id         serial PRIMARY KEY,
+  student_id integer NOT NULL UNIQUE REFERENCES students(id) ON DELETE CASCADE,
+  code       text NOT NULL UNIQUE
+);
+
 -- 登入速率限制用；共用資料庫是為了在多台/多個 process 的部署環境下
 -- 仍然算同一個計數（記憶體內計數在那種環境下每個 process 各算各的，不準）
 CREATE TABLE login_attempts (

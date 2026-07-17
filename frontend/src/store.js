@@ -10,9 +10,14 @@ function todayStr() {
 
 const session = getSession()
 
+function inviteCodeFromUrl() {
+  return new URLSearchParams(window.location.search).get('invite') || ''
+}
+
 export const store = reactive({
   classInfo: null,    // {grade, class_number} | null（null = 老師還沒建班）
   classInfoReady: false, // 還沒問過後端之前，classInfo 是 null 不代表真的沒班級
+  inviteCode: inviteCodeFromUrl(), // 從註冊連結網址帶進來的邀請碼（沒有就是空字串）
   date: todayStr(),
   notes: [],          // [{id, text, seq}]
   students: [],       // [{id, seat_no, active}]
@@ -204,6 +209,26 @@ export function logout() {
   store.token = ''
   store.role = ''
   store.seatNo = null
+}
+
+export function registerParent(code, username, password) {
+  return withErrorHandling(async () => {
+    const { token, role, seatNo } = await apiPost('/api/auth/register-parent', { code, username, password })
+    setSession({ token, role, seatNo })
+    store.token = token
+    store.role = role
+    store.seatNo = seatNo || null
+    store.inviteCode = ''
+  })
+}
+
+export function generateInvite(student) {
+  return withErrorHandling(async () => {
+    const { code } = await apiPost(`/api/students/${student.id}/invite`, {})
+    const link = `${window.location.origin}${import.meta.env.BASE_URL}?invite=${code}`
+    const label = student.name ? `座號 ${student.seat_no}（${student.name}）` : `座號 ${student.seat_no}`
+    prompt(`把這個連結傳給${label}的家長，家長點開就能直接註冊帳號：`, link)
+  })
 }
 
 export const ROLL_LABEL = ['', '到', '缺', '假']
