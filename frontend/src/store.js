@@ -214,6 +214,16 @@ export function logout() {
   store.seatNo = null
 }
 
+export async function lookupInvite(code) {
+  store.error = ''
+  try {
+    return await apiGet(`/api/auth/invite-info?code=${encodeURIComponent(code)}`)
+  } catch (err) {
+    store.error = err.message
+    return null
+  }
+}
+
 export function registerParent(code, username, password) {
   return withErrorHandling(async () => {
     const { token, role, seatNo } = await apiPost('/api/auth/register-parent', { code, username, password })

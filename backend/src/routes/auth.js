@@ -60,6 +60,31 @@ router.post('/login', asyncHandler(loginRateLimiter), asyncHandler(async (req, r
   res.json({ token, role: 'parent', seatNo: parent.seat_no })
 }))
 
+// 共用：查邀請碼是否存在且未過期，過期的話順便刪掉。回傳 { studentId } 或 { error }
+async function resolveInvite(code) {
+  const inviteRes = await pool.query(
+    'SELECT student_id, expires_at FROM parent_invites WHERE code = $1',
+    [String(code || '').trim().toUpperCase()]
+  )
+  if (!inviteRes.rows.length) {
+    return { error: '邀請連結無效或已經用過，請跟老師確認' }
+  }
+  if (new Date(inviteRes.rows[0].expires_at) < new Date()) {
+    await pool.query('DELETE FROM parent_invites WHERE student_id = $1', [inviteRes.rows[0].student_id])
+    return { error: '邀請連結已經過期，請跟老師要一組新的' }
+  }
+  return { studentId: inviteRes.rows[0].student_id }
+}
+
+// GET /api/auth/invite-info?code=CODE — 公開，家長註冊前先確認邀請碼對應到哪個學生
+router.get('/invite-info', asyncHandler(loginRateLimiter), asyncHandler(async (req, res) => {
+  const { studentId, error } = await resolveInvite(req.query.code)
+  if (error) return res.status(401).json({ error })
+
+  const { rows } = await pool.query('SELECT seat_no, name FROM students WHERE id = $1', [studentId])
+  res.json({ seatNo: rows[0].seat_no, name: rows[0].name })
+}))
+
 // POST /api/auth/register-parent { code, username, password } — 公開，家長拿邀請連結上的碼自行設定帳密
 router.post('/register-parent', asyncHandler(loginRateLimiter), asyncHandler(async (req, res) => {
   const { code, username, password } = req.body
@@ -67,18 +92,8 @@ router.post('/register-parent', asyncHandler(loginRateLimiter), asyncHandler(asy
     return res.status(400).json({ error: '需要 code、username 和 password' })
   }
 
-  const inviteRes = await pool.query(
-    'SELECT student_id, expires_at FROM parent_invites WHERE code = $1',
-    [String(code).trim().toUpperCase()]
-  )
-  if (!inviteRes.rows.length) {
-    return res.status(401).json({ error: '邀請連結無效或已經用過，請跟老師確認' })
-  }
-  if (new Date(inviteRes.rows[0].expires_at) < new Date()) {
-    await pool.query('DELETE FROM parent_invites WHERE student_id = $1', [inviteRes.rows[0].student_id])
-    return res.status(401).json({ error: '邀請連結已經過期，請跟老師要一組新的' })
-  }
-  const studentId = inviteRes.rows[0].student_id
+  const { studentId, error } = await resolveInvite(code)
+  if (error) return res.status(401).json({ error })
 
   const teacherClash = await pool.query('SELECT 1 FROM teachers WHERE username = $1', [username])
   if (teacherClash.rows.length) {
