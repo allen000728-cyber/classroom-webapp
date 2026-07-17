@@ -11,7 +11,10 @@ function todayStr() {
 const session = getSession()
 
 function inviteCodeFromUrl() {
-  return new URLSearchParams(window.location.search).get('invite') || ''
+  // 用 URL fragment（#invite=CODE）而不是 query string，因為 fragment 不會被送到
+  // 伺服器 —— 聊天軟體幫連結產生預覽卡片時發的請求、CDN 的存取紀錄都看不到它。
+  const hash = window.location.hash.replace(/^#/, '')
+  return new URLSearchParams(hash).get('invite') || ''
 }
 
 export const store = reactive({
@@ -225,7 +228,7 @@ export function registerParent(code, username, password) {
 export function generateInvite(student) {
   return withErrorHandling(async () => {
     const { code } = await apiPost(`/api/students/${student.id}/invite`, {})
-    const link = `${window.location.origin}${import.meta.env.BASE_URL}?invite=${code}`
+    const link = `${window.location.origin}${import.meta.env.BASE_URL}#invite=${code}`
     const label = student.name ? `座號 ${student.seat_no}（${student.name}）` : `座號 ${student.seat_no}`
     prompt(`把這個連結傳給${label}的家長，家長點開就能直接註冊帳號（24 小時內有效，過期要重新產生）：`, link)
   })
