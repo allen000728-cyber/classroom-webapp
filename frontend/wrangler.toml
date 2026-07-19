@@ -1,3 +1,8 @@
 name = "classroom-webapp"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-07-19"
+
+# 一旦專案裡有 wrangler.toml，Cloudflare Pages 的 build 環境變數就會改成從這裡讀，
+# 後台 Settings > Environment variables 設定的值反而不會生效 —— 所以直接寫在這裡。
+[vars]
+VITE_API_URL = "https://classroom-backend-9lml.onrender.com"
