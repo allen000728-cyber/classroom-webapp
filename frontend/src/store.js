@@ -10,17 +10,27 @@ function todayStr() {
 
 const session = getSession()
 
+// 用 URL fragment 而不是 query string，因為 fragment 不會被送到伺服器 ——
+// 聊天軟體幫連結產生預覽卡片時發的請求、CDN 的存取紀錄都看不到它。
+function hashParams() {
+  return new URLSearchParams(window.location.hash.replace(/^#/, ''))
+}
+
 function inviteCodeFromUrl() {
-  // 用 URL fragment（#invite=CODE）而不是 query string，因為 fragment 不會被送到
-  // 伺服器 —— 聊天軟體幫連結產生預覽卡片時發的請求、CDN 的存取紀錄都看不到它。
-  const hash = window.location.hash.replace(/^#/, '')
-  return new URLSearchParams(hash).get('invite') || ''
+  return hashParams().get('invite') || ''
+}
+
+// 老師註冊連結（#register=teacher）跟一般登入頁用同一個網址，但拿掉了登入頁上
+// 的入口按鈕 —— 家長平常看到的登入頁不會有這個選項，只有分享這組連結的人才看得到。
+function teacherRegisterFromUrl() {
+  return hashParams().get('register') === 'teacher'
 }
 
 export const store = reactive({
   classInfo: null,    // {grade, class_number} | null（null = 老師還沒建班）
   classInfoReady: false, // 還沒問過後端之前，classInfo 是 null 不代表真的沒班級
   inviteCode: inviteCodeFromUrl(), // 從註冊連結網址帶進來的邀請碼（沒有就是空字串）
+  teacherRegisterRequested: teacherRegisterFromUrl(), // 網址是不是老師專用的註冊連結
   date: todayStr(),
   notes: [],          // [{id, text, seq}]
   students: [],       // [{id, seat_no, active}]

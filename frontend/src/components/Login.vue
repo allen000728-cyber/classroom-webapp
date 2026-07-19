@@ -4,7 +4,9 @@ import { store, login as doLogin, registerParent, registerTeacher, lookupInvite 
 
 const isInviteRegister = ref(!!store.inviteCode) // 家長透過邀請連結註冊
 const checking = ref(!!store.inviteCode)
-const mode = ref('login') // 'login' | 'teacherRegister' — 沒有邀請碼時才會用到
+// 'login' | 'teacherRegister' — 老師註冊只能透過專用連結（#register=teacher）進來，
+// 一般登入頁（家長平常看到的那個）沒有任何按鈕可以切過去
+const mode = ref(store.teacherRegisterRequested ? 'teacherRegister' : 'login')
 const username = ref('')
 const password = ref('')
 const inviteInfo = ref(null) // {seatNo, name}
@@ -48,7 +50,6 @@ async function submit() {
         <input type="text" v-model="username" placeholder="帳號" autocomplete="username" @keyup.enter="submit">
         <input type="password" v-model="password" placeholder="密碼" autocomplete="current-password" @keyup.enter="submit">
         <button class="btn btn-save" @click="submit">登入</button>
-        <button class="btn-link" @click="toggleMode">還沒有老師帳號？註冊一個</button>
       </template>
 
       <template v-else-if="!isInviteRegister && mode === 'teacherRegister'">
