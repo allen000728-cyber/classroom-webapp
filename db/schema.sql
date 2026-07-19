@@ -1,9 +1,13 @@
 -- 班級網頁 資料庫結構 (PostgreSQL / Neon)
 
+-- status 是為了以後「付款才能啟用帳號」預留的掛鉤：目前預設 'active'，
+-- 自助註冊馬上就能用；以後要開付款闗卡時，把新帳號預設改成 'pending'，
+-- 確認付款後再把該帳號的 status 改成 'active' 即可，不用再改 schema。
 CREATE TABLE teachers (
   id            serial PRIMARY KEY,
   username      text NOT NULL UNIQUE,
-  password_hash text NOT NULL
+  password_hash text NOT NULL,
+  status        text NOT NULL DEFAULT 'active' CHECK (status IN ('pending', 'active'))
 );
 
 -- 每個老師最多同時帶一個班級（teacher_id 唯一）；老師畢業班級時整批清空這個班的

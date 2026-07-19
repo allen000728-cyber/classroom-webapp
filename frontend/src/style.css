@@ -119,6 +119,17 @@ body {
 }
 .login-card input:focus { border-color: var(--primary); }
 .login-card .btn { margin-top: 4px; }
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 2px;
+  text-decoration: underline;
+}
 
 /* ── Parent page ── */
 .parent-page {

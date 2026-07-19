@@ -20,7 +20,7 @@ router.post('/login', asyncHandler(loginRateLimiter), asyncHandler(async (req, r
   }
 
   const teacherRes = await pool.query(
-    'SELECT id, password_hash FROM teachers WHERE username = $1',
+    'SELECT id, password_hash, status FROM teachers WHERE username = $1',
     [username]
   )
   const teacher = teacherRes.rows[0]
@@ -44,6 +44,9 @@ router.post('/login', asyncHandler(loginRateLimiter), asyncHandler(async (req, r
   }
 
   if (teacher) {
+    if (teacher.status !== 'active') {
+      return res.status(403).json({ error: '帳號還沒有啟用，請聯絡我們完成開通' })
+    }
     const token = jwt.sign(
       { role: 'teacher', teacherId: teacher.id, username },
       process.env.JWT_SECRET,
@@ -125,4 +128,48 @@ router.post('/register-parent', asyncHandler(loginRateLimiter), asyncHandler(asy
     { expiresIn: '7d' }
   )
   res.status(201).json({ token, role: 'parent', seatNo: seatRes.rows[0].seat_no })
+}))
+
+// POST /api/auth/register-teacher { username, password } — 公開，老師自行註冊帳號
+// （沒有邀請碼門檻，任何人都能建立老師帳號，靠 loginRateLimiter 擋自動化濫用）
+router.post('/register-teacher', asyncHandler(loginRateLimiter), asyncHandler(async (req, res) => {
+  const { username, password } = req.body
+  if (!username || !password) {
+    return res.status(400).json({ error: '需要 username 和 password' })
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: '密碼至少需要 8 個字元' })
+  }
+
+  // 老師名字不能跟現有家長帳號撞名，不然那個家長以後永遠登入不了
+  // （login 會先查 teachers 再查 parents，撞名的話 teachers 那筆永遠先比對到）
+  const parentClash = await pool.query('SELECT 1 FROM parents WHERE username = $1', [username])
+  if (parentClash.rows.length) {
+    return res.status(409).json({ error: '這個帳號已經被使用了' })
+  }
+
+  const passwordHash = await hashPassword(password)
+
+  let teacher
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO teachers (username, password_hash) VALUES ($1, $2) RETURNING id, status',
+      [username, passwordHash]
+    )
+    teacher = rows[0]
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: '這個帳號已經被使用了' })
+    throw err
+  }
+
+  if (teacher.status !== 'active') {
+    return res.status(201).json({ pending: true })
+  }
+
+  const token = jwt.sign(
+    { role: 'teacher', teacherId: teacher.id, username },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  )
+  res.status(201).json({ token, role: 'teacher' })
 }))

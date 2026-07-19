@@ -235,6 +235,19 @@ export function registerParent(code, username, password) {
   })
 }
 
+export function registerTeacher(username, password) {
+  return withErrorHandling(async () => {
+    const result = await apiPost('/api/auth/register-teacher', { username, password })
+    if (result.pending) {
+      store.error = '註冊成功，帳號啟用後就能登入，請留意後續通知'
+      return
+    }
+    setSession({ token: result.token, role: result.role })
+    store.token = result.token
+    store.role = result.role
+  })
+}
+
 export function generateInvite(student) {
   return withErrorHandling(async () => {
     const { code } = await apiPost(`/api/students/${student.id}/invite`, {})
